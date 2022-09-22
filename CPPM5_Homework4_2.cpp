@@ -107,7 +107,7 @@ public:
         }
     }
 
-protected:
+private:
     Address* read(std::ifstream& fin)
     {
         Address* res = nullptr;
