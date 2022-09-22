@@ -129,16 +129,50 @@ protected:
     }
 };
 
-// Класс, который сортирует, меняя порядок массива адресов на обратный
+// Класс, который сравнивает адреса для сортировки
+class AddressComparer
+{
+public:
+    int compare(Address* addr1, Address* addr2)
+    {
+        if (addr1 == addr2)
+        {
+            return 0;
+        }
+
+        if (!addr1)
+        {
+            return -1;
+        }
+
+        if (!addr2)
+        {
+            return 1;
+        }
+
+        return addr1->getCity().compare(addr2->getCity());
+    }
+};
+
+// Класс, который сортирует по названию города в алфавитном порядке
 class AddressListReverseSorter
 {
 public:
-    void process(Address** addrList, const int count)
+    void process(Address** addrList, const int count, AddressComparer& comparer)
     {
-        for (int i = 0; i < count / 2; ++i)
-        {
-            std::swap(addrList[i], addrList[count - i - 1]);
-        }
+        // взял обратный пузырек из одного из прошлых заданий
+        bool swapped;
+        do {
+            swapped = false;
+            for (int i = count - 1; i > 0; --i) {
+                if (comparer.compare(addrList[i], addrList[i - 1]) < 0) {
+                    swapped = true;
+                    Address* tmp = addrList[i];
+                    addrList[i] = addrList[i - 1];
+                    addrList[i - 1] = tmp;
+                }
+            }
+        } while (swapped);
     }
 };
 
@@ -188,25 +222,26 @@ int main()
 
     if (fin.is_open())
     {
-        auto loader = new AddressListLoader();
+        AddressListLoader loader;
         int addrCount = 0;
-        Address** addrList = loader->readAddressList(fin, addrCount);
+        Address** addrList = loader.readAddressList(fin, addrCount);
         fin.close();
         if (addrList)
         {
-            auto sorter = new AddressListReverseSorter();
-            sorter->process(addrList, addrCount);
+            AddressListReverseSorter sorter;
+            AddressComparer comparer;
+            sorter.process(addrList, addrCount, comparer);
 
             std::ofstream fout(outputFileName);
             if (fout.is_open())
             {
-                auto writer = new AddressListWriter();
-                if (!writer->writeAddressList(fout, addrList, addrCount))
+                AddressListWriter writer;
+                if (!writer.writeAddressList(fout, addrList, addrCount))
                 {
                     std::cout << "Невозможно записать список адресов в файл '" << outputFileName << "'";
                 }
                 fout.close();
-                loader->freeAddressList(addrList, addrCount);
+                loader.freeAddressList(addrList, addrCount);
             }
             else
             {
